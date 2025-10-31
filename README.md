@@ -1,4 +1,4 @@
-# **FireWall Blocks**
+# **FireWall Blocks:** An Android Firewall App (With Shizuku & VPN support)
 
 A simple, open-source Android firewall that blocks app internet access using either Shizuku or a local VPN, with no root requirement.
 
