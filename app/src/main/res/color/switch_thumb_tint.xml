@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- When on (checked), make thumb white to contrast blue track -->
+    <item android:state_checked="true" android:color="@color/white" />
+    <!-- When off (unchecked), make thumb light grey -->
+    <item android:state_checked="false" android:color="@color/light_grey" />
+</selector>
+

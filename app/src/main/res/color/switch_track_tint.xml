@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- When on (checked), track is blue -->
+    <item android:state_checked="true" android:color="@color/dark_blue" />
+    <!-- When off (unchecked), track is also blue -->
+    <item android:state_checked="false" android:color="@color/dark_blue" />
+</selector>
+

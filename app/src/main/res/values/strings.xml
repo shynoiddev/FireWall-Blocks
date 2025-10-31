@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FireWall Blocks</string>
+
+    <!-- Main Activity -->
+    <string name="mode_shizuku">Shizuku</string>
+    <string name="mode_vpn">VPN</string>
+    <string name="loading_apps">Loading Apps…</string>
+    
+    <string name="master_enable">Enable</string>
+    <string name="master_disable">Disable</string>
+
+    <!-- Menu -->
+    <string name="menu_sort">Sort</string>
+    <string name="menu_search">Search</string>
+    <string name="menu_refresh">Refresh</string>
+    <string name="menu_copy_vpn_to_shizuku">Copy VPN settings</string>
+    <string name="menu_copy_shizuku_to_vpn">Copy Shizuku settings</string>
+    <string name="menu_help">Help and more</string>
+    
+    <!-- Import/Export -->
+    <string name="menu_export">Export Settings</string>
+    <string name="menu_import">Import Settings</string>
+    <string name="export_success">Settings exported successfully</string>
+    <string name="export_failed">Export failed</string>
+    <string name="import_success">Settings imported successfully</string>
+    <string name="import_failed">Import failed. Invalid file?</string>
+    <string name="backup_file_name">firewall_blocks_backup.json</string>
+
+    <!-- Sort Options -->
+    <string name="sort_by_name">Sort by Name</string>
+    <string name="sort_show_system">Show System Apps</string>
+    <string name="sort_show_user">Show User Apps</string>
+    <string name="sort_show_blocked">Show Blocked First</string>
+
+    <!-- Selection Menu -->
+    <string name="menu_select_all">Select All</string>
+    <string name="selection_title_zero">Select items</string>
+    <string name="selection_title_one">1 selected</string>
+    <string name="selection_title_many">%d selected</string>
+
+    <!-- Help Activity -->
+    <string name="help_title">Help and more</string>
+    <string name="help_intro">This app allows you to block internet access for your apps using two methods: Shizuku (recommended) or a local VPN (fallback) without root requirement.</string>
+    <string name="help_shizuku_title">1. Shizuku Mode</string>
+    <string name="help_shizuku_desc">This mode uses Shizuku to apply firewall rules directly to the system. It is efficient and does not require a constant background service. And doesn\'t need the app to be constantly runing. \n\nTo use it, you must first download and activate Shizuku:</string>
+    <string name="help_shizuku_link">https://github.com/RikkaApps/Shizuku</string>
+    <string name="help_vpn_title">2. VPN Mode</string>
+    <string name="help_vpn_desc">This mode runs a local VPN service on your phone. All app traffic passes through this service, which blocks connections for the apps you select. This mode must be running constantly to work.</string>
+    <string name="help_usage_title">3. How to Use</string>
+    <string name="help_usage_desc">The firewall is DISABLED by default.\n\n1. Press the \"Enable\" button on the main screen to start the firewall.\n\n2. Toggle the switch to select your mode (Shizuku or VPN).\n\n3. Tap the Wi-Fi or Data icons next to an app to block or allow its internet access for that mode. for Shizuku both are linked for now.\n\nAfter a reboot, you must open this app (and Shizuku, if used) and press \"Enable\" again to re-apply your settings. hit refresh button in the app, enable/disable or clear cache and force stop to troubleshoot.\n\n Made by shynoid/shayan. </string>
+    <string name="help_donate_button">Donate Bitcoin</string>
+    <string name="help_donate_toast">Bitcoin Address Copied to Clipboard</string>
+
+    <!-- Content Descriptions (for accessibility) -->
+    <string name="content_desc_app_icon">App Icon</string>
+    <string name="content_desc_wifi_toggle">Toggle Wi-Fi access</string>
+    <string name="content_desc_data_toggle">Toggle Mobile Data access</string>
+    <string name="content_desc_back_arrow">Back</string>
+</resources>
+
+
