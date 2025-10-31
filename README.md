@@ -20,4 +20,4 @@ A simple, open-source Android firewall that blocks app internet access using eit
 
 ## **Download**
 
-*You can find the latest installable APK file on our [Releases page](https://github.com/shynoiddev/FireWall-Blocks/releases/tag/v1.0.shynoid).*
+*You can find the latest installable APK file on our [Releases page](https://github.com/shynoiddev/FireWall-Blocks/releases).*
