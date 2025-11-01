@@ -1,5 +1,6 @@
 package com.shayan.firewall
 
+import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -16,7 +17,9 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -24,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -51,6 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     private val masterAppList = mutableListOf<AppInfo>()
     private var currentSortFilterMode = SortFilterMode.NAME
+    private var isSortBlockedFirst = false
     private var currentSearchQuery: String? = null
 
     private var actionMode: ActionMode? = null
@@ -75,8 +80,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            Toast.makeText(this, getString(R.string.notification_permission_required), Toast.LENGTH_LONG).show()
+            prefs.setRebootReminder(false)
+            invalidateOptionsMenu() 
+        }
+    }
+
     private val shizukuPermissionListener =
         Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+            ShizukuManager.clearUidCache() 
             if (requestCode == shizukuRequestCode) {
                 if (grantResult == PackageManager.PERMISSION_GRANTED) {
                     if (prefs.isFirewallEnabled()) {
@@ -91,17 +107,25 @@ class MainActivity : AppCompatActivity() {
     private val shizukuBinderListener = object : Shizuku.OnBinderReceivedListener {
         override fun onBinderReceived() {
             Log.d("MainActivity", "Shizuku Binder Received")
+            ShizukuManager.clearUidCache() 
             if (prefs.isFirewallEnabled() && currentMode == FirewallMode.SHIZUKU) {
                 applyAllRules()
             }
         }
     }
+    
+    private val shizukuBinderDeadListener = object : Shizuku.OnBinderDeadListener {
+        override fun onBinderDead() {
+            Log.w("MainActivity", "Shizuku Binder Dead")
+            ShizukuManager.clearUidCache()
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
 
-        // Bypass hidden API restrictions where needed
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             HiddenApiBypass.addHiddenApiExemptions("")
         }
@@ -113,7 +137,9 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
         prefs = FirewallPreferences(this)
-
+        
+        isSortBlockedFirst = prefs.isSortBlockedFirst()
+        
         loadingContainer = findViewById(R.id.loading_container)
         recyclerView = findViewById(R.id.recycler_view_apps)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -259,6 +285,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupShizukuListeners() {
         Shizuku.addRequestPermissionResultListener(shizukuPermissionListener)
         Shizuku.addBinderReceivedListener(shizukuBinderListener)
+        Shizuku.addBinderDeadListener(shizukuBinderDeadListener)
     }
 
     private fun checkShizukuPermission(): Boolean {
@@ -268,14 +295,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         try {
-            if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+            
+            if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED && Shizuku.pingBinder()) {
                 return true
-            } else if (Shizuku.shouldShowRequestPermissionRationale()) {
-                Toast.makeText(this, "Please grant permission in Shizuku", Toast.LENGTH_SHORT).show()
-                return false
+            } else if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                 if (Shizuku.shouldShowRequestPermissionRationale()) {
+                    Toast.makeText(this, "Please grant permission in Shizuku", Toast.LENGTH_SHORT).show()
+                    return false
+                } else {
+                    Shizuku.requestPermission(shizukuRequestCode)
+                    return false
+                }
             } else {
-                Shizuku.requestPermission(shizukuRequestCode)
-                return false
+                 // Permission is granted, but service is not running
+                 Toast.makeText(this, "Shizuku service is not running", Toast.LENGTH_SHORT).show()
+                 return false
             }
         } catch (e: Exception) {
             if (e is IllegalStateException) {
@@ -310,7 +344,7 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val uid = packageManager.getApplicationInfo(app.packageName, 0).uid
-                    ShizukuManager.applyRule(uid, app.isWifiBlocked)
+                    ShizukuManager.applyRule(uid, app.packageName, app.isWifiBlocked)
                 } catch (e: Exception) {
                     Log.e("MainActivity", "Failed to get UID for ${app.packageName}", e)
                 }
@@ -321,6 +355,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener)
         Shizuku.removeBinderReceivedListener(shizukuBinderListener)
+        Shizuku.removeBinderDeadListener(shizukuBinderDeadListener)
         super.onDestroy()
     }
 
@@ -334,18 +369,26 @@ class MainActivity : AppCompatActivity() {
             masterAppList.clear()
 
             val packageManager = packageManager
-            val packages = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+            val packages = packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS)
 
-            for (app in packages) {
+            for (pkgInfo in packages) {
+                val app = pkgInfo.applicationInfo
+                if (app == null) {
+                    continue
+                }
+
                 val appName = packageManager.getApplicationLabel(app).toString()
                 val appIcon = packageManager.getApplicationIcon(app)
                 val isSystemApp = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                
+                val hasInternet = pkgInfo.requestedPermissions?.contains("android.permission.INTERNET") == true
 
                 masterAppList.add(AppInfo(
                     appName = appName,
                     packageName = app.packageName,
                     appIcon = appIcon,
                     isSystemApp = isSystemApp,
+                    hasInternetPermission = hasInternet,
                     isWifiBlocked = prefs.isWifiBlocked(currentMode, app.packageName),
                     isDataBlocked = prefs.isDataBlocked(currentMode, app.packageName),
                     isSelected = false
@@ -371,29 +414,32 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val sortedList = when (currentSortFilterMode) {
-            SortFilterMode.NAME ->
-                processedList.sortedBy { it.appName.lowercase() }
-            SortFilterMode.SYSTEM ->
-                processedList.filter { it.isSystemApp }.sortedBy { it.appName.lowercase() }
-            SortFilterMode.USER ->
-                processedList.filter { !it.isSystemApp }.sortedBy { it.appName.lowercase() }
-            SortFilterMode.BLOCKED ->
-                processedList.sortedWith(compareBy(
-                    { !(it.isWifiBlocked || it.isDataBlocked) },
-                    { it.appName.lowercase() }
-                ))
+        processedList = when (currentSortFilterMode) {
+            SortFilterMode.SYSTEM -> processedList.filter { it.isSystemApp }
+            SortFilterMode.USER -> processedList.filter { !it.isSystemApp }
+            SortFilterMode.INTERNET_ONLY -> processedList.filter { it.hasInternetPermission }
+            SortFilterMode.NAME -> processedList 
+        }
+
+        val sortedList: List<AppInfo>
+        if (isSortBlockedFirst) {
+            sortedList = processedList.sortedWith(compareBy(
+                { !(it.isWifiBlocked || it.isDataBlocked) }, 
+                { it.appName.lowercase() } 
+            ))
+        } else {
+            sortedList = processedList.sortedBy { it.appName.lowercase() }
         }
 
         appAdapter.updateApps(sortedList)
     }
+
 
     private fun onToggleClicked(app: AppInfo, type: String) {
         val newWifiState = if (type == "wifi") !app.isWifiBlocked else app.isWifiBlocked
         val newDataState = if (type == "data") !app.isDataBlocked else app.isDataBlocked
 
         val (finalWifiState, finalDataState) = if (currentMode == FirewallMode.SHIZUKU) {
-            // Link wifi & data in Shizuku mode if separate control isn't implemented
             val newState = if (type == "wifi") newWifiState else newDataState
             Pair(newState, newState)
         } else {
@@ -410,6 +456,8 @@ class MainActivity : AppCompatActivity() {
             targetApps = listOf(app)
         }
 
+        val isFirewallEnabled = prefs.isFirewallEnabled()
+
         for (targetApp in targetApps) {
             prefs.setWifiBlocked(currentMode, targetApp.packageName, finalWifiState)
             prefs.setDataBlocked(currentMode, targetApp.packageName, finalDataState)
@@ -417,16 +465,18 @@ class MainActivity : AppCompatActivity() {
             targetApp.isWifiBlocked = finalWifiState
             targetApp.isDataBlocked = finalDataState
 
-            if (currentMode == FirewallMode.SHIZUKU) {
-                checkShizukuAndApplyRule(targetApp)
+            if (isFirewallEnabled) {
+                if (currentMode == FirewallMode.SHIZUKU) {
+                    checkShizukuAndApplyRule(targetApp)
+                }
             }
         }
 
-        if (currentMode == FirewallMode.VPN) {
+        if (isFirewallEnabled && currentMode == FirewallMode.VPN) {
             forceVpnRestart()
         }
 
-        if (currentSortFilterMode == SortFilterMode.BLOCKED) {
+        if (isSortBlockedFirst) {
             sortAndDisplayApps()
         } else {
             val visibleApps = appAdapter.getAppList()
@@ -508,7 +558,6 @@ class MainActivity : AppCompatActivity() {
         appAdapter.updateApps(visibleApps)
     }
 
-    // Export settings to JSON
     private fun exportSettings(uri: Uri) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -537,7 +586,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Import settings from JSON
     private fun importSettings(uri: Uri) {
         lifecycleScope.launch(Dispatchers.IO) {
             var importSuccess = false
@@ -566,7 +614,6 @@ class MainActivity : AppCompatActivity() {
                         if (currentMode == FirewallMode.VPN) {
                             forceVpnRestart()
                         } else {
-                            // Important: refresh Shizuku service cache then re-apply rules
                             lifecycleScope.launch(Dispatchers.IO) {
                                 try {
                                     ShizukuManager.refreshConnectivityService()
@@ -586,34 +633,41 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSortDialog() {
-        val items = arrayOf(
-            getString(R.string.sort_by_name),
-            getString(R.string.sort_show_system),
-            getString(R.string.sort_show_user),
-            getString(R.string.sort_show_blocked)
-        )
+        val view = layoutInflater.inflate(R.layout.dialog_sort, null)
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radio_group_filter)
+        val checkBox = view.findViewById<CheckBox>(R.id.checkbox_sort_blocked)
 
-        val currentSelection = when (currentSortFilterMode) {
-            SortFilterMode.NAME -> 0
-            SortFilterMode.SYSTEM -> 1
-            SortFilterMode.USER -> 2
-            SortFilterMode.BLOCKED -> 3
+        when (currentSortFilterMode) {
+            SortFilterMode.NAME -> radioGroup.check(R.id.radio_sort_name)
+            SortFilterMode.SYSTEM -> radioGroup.check(R.id.radio_sort_system)
+            SortFilterMode.USER -> radioGroup.check(R.id.radio_sort_user)
+            SortFilterMode.INTERNET_ONLY -> radioGroup.check(R.id.radio_sort_internet)
+        }
+        checkBox.isChecked = isSortBlockedFirst
+        
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            currentSortFilterMode = when (checkedId) {
+                R.id.radio_sort_system -> SortFilterMode.SYSTEM
+                R.id.radio_sort_user -> SortFilterMode.USER
+                R.id.radio_sort_internet -> SortFilterMode.INTERNET_ONLY
+                else -> SortFilterMode.NAME
+            }
+            sortAndDisplayApps()
+        }
+        
+        checkBox.setOnCheckedChangeListener { _, isChecked ->
+            isSortBlockedFirst = isChecked
+            prefs.setSortBlockedFirst(isSortBlockedFirst)
+            sortAndDisplayApps()
         }
 
         AlertDialog.Builder(this)
-            .setTitle("Sort & Filter")
-            .setSingleChoiceItems(items, currentSelection) { dialog, which ->
-                currentSortFilterMode = when (which) {
-                    1 -> SortFilterMode.SYSTEM
-                    2 -> SortFilterMode.USER
-                    3 -> SortFilterMode.BLOCKED
-                    else -> SortFilterMode.NAME
-                }
-                sortAndDisplayApps()
-                dialog.dismiss()
-            }
+            .setTitle(getString(R.string.sort_dialog_title))
+            .setView(view)
+            
             .show()
     }
+
 
     private fun copySettings() {
         val (sourceMode, destMode, message) = if (currentMode == FirewallMode.SHIZUKU) {
@@ -627,12 +681,11 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    // Menu and search
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         val searchItem = menu?.findItem(R.id.menu_search)
         val searchView = searchItem?.actionView as? SearchView
-        // Use an inline hint to avoid missing resource crash
+        
         searchView?.queryHint = "Search apps..."
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -650,6 +703,22 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        
+        val copyItem = menu?.findItem(R.id.menu_copy_settings)
+        if (currentMode == FirewallMode.VPN) {
+            copyItem?.title = getString(R.string.menu_copy_shizuku_to_vpn)
+        } else {
+            copyItem?.title = getString(R.string.menu_copy_vpn_to_shizuku)
+        }
+        
+        val reminderItem = menu?.findItem(R.id.menu_reboot_reminder)
+        reminderItem?.isChecked = prefs.isRebootReminderEnabled()
+
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_sort -> {
@@ -657,7 +726,6 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.menu_refresh -> {
-                // Force re-apply rules for current mode
                 if (currentMode == FirewallMode.VPN) {
                     forceVpnRestart()
                 } else {
@@ -670,12 +738,25 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.menu_export -> {
-                // Launch create document
                 createFileLauncher.launch("firewall_settings.json")
                 true
             }
             R.id.menu_import -> {
                 openFileLauncher.launch(arrayOf("application/json"))
+                true
+            }
+            R.id.menu_reboot_reminder -> {
+                val isChecked = !item.isChecked
+                item.isChecked = isChecked
+                prefs.setRebootReminder(isChecked)
+                
+                if (isChecked) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                }
                 true
             }
             R.id.menu_help -> {
@@ -686,3 +767,5 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
+

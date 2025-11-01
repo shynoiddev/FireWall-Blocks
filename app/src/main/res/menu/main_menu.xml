@@ -40,6 +40,13 @@
                 android:id="@+id/menu_import"
                 android:title="@string/menu_import"
                 app:showAsAction="never" />
+
+            <!-- Reboot Reminder -->
+            <item
+                android:id="@+id/menu_reboot_reminder"
+                android:title="@string/menu_reboot_reminder"
+                android:checkable="true"
+                app:showAsAction="never" />
                 
             <!-- Help  -->
             <item

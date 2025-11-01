@@ -6,12 +6,12 @@ package com.shayan.firewall
  * - NAME: Sort by name (this is also the "ALL" view)
  * - SYSTEM: Filter to show system apps only
  * - USER: Filter to show user (non-system) apps only
- * - BLOCKED: Sort to show blocked apps first
+ * - INTERNET_ONLY: Filter to show only apps with INTERNET permission
  */
 enum class SortFilterMode {
     NAME,
     SYSTEM,
     USER,
-    BLOCKED
+    INTERNET_ONLY
 }
 

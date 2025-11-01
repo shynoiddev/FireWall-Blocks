@@ -71,6 +71,29 @@ class FirewallPreferences(context: Context) {
     fun isFirewallEnabled(): Boolean {
         return defaultPrefs.getBoolean("is_firewall_enabled", false)
     }
+    
+    // --- Sort Preference ---
+    
+    fun setSortBlockedFirst(isBlockedFirst: Boolean) {
+        defaultPrefs.edit().putBoolean("sort_blocked_first", isBlockedFirst).apply()
+    }
+    
+    fun isSortBlockedFirst(): Boolean {
+        return defaultPrefs.getBoolean("sort_blocked_first", false)
+    }
+    
+    // --- Reboot Reminder Preference ---
+    
+    fun setRebootReminder(isEnabled: Boolean) {
+        defaultPrefs.edit().putBoolean("reboot_reminder_enabled", isEnabled).apply()
+    }
+
+    fun isRebootReminderEnabled(): Boolean {
+        return defaultPrefs.getBoolean("reboot_reminder_enabled", false)
+    }
+
+    // --- VPN Helper ---
+    
     fun getBlockedPackagesForNetwork(mode: FirewallMode, isWifi: Boolean): Set<String> {
         val prefs = getPrefs(mode)
         val blockedPackages = mutableSetOf<String>()
@@ -90,6 +113,9 @@ class FirewallPreferences(context: Context) {
         }
         return blockedPackages
     }
+    
+    // --- Import / Export ---
+    
     fun exportAllSettings(): String? {
         return try {
             val masterJson = JSONObject()
@@ -142,5 +168,4 @@ class FirewallPreferences(context: Context) {
         }
     }
 }
-
 

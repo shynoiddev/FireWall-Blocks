@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="24dp"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sort_filter_by"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp" />
+
+    <RadioGroup
+        android:id="@+id/radio_group_filter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/radio_sort_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_by_name"
+            android:textColor="@color/light_grey" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_system"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_show_system"
+            android:textColor="@color/light_grey" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_user"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_show_user"
+            android:textColor="@color/light_grey" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_internet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_show_internet"
+            android:textColor="@color/light_grey" />
+
+    </RadioGroup>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/selected_grey"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"/>
+
+    <CheckBox
+        android:id="@+id/checkbox_sort_blocked"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/sort_show_blocked"
+        android:textColor="@color/light_grey"
+        android:layout_marginBottom="8dp"/>
+
+</LinearLayout>
+

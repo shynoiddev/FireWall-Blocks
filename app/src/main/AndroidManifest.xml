@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- For LogSender service in AndroidIDE -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- Required to list all installed applications -->
@@ -18,6 +19,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- Required for foreground service type on Android 14+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    
+    <!-- For Reboot Reminder -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <!-- For Notifications on API 33+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
 
     <application
@@ -64,9 +71,18 @@
                 <action android:name="android.net.VpnService" />
             </intent-filter>
         </service>
+        
+        <!-- Reboot Receiver -->
+        <receiver
+            android:name=".RebootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
             
     </application>
 
 </manifest>
-
 
