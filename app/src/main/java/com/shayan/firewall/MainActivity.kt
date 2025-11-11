@@ -155,6 +155,14 @@ class MainActivity : AppCompatActivity() {
         loadApps()
     }
 
+    override fun onResume() {
+        super.onResume()
+        
+        if (currentMode == FirewallMode.SHIZUKU && prefs.isFirewallEnabled()) {
+             checkShizukuAndApplyAll(silent = true)
+        }
+    }
+
     private fun setupAdapter() {
         appAdapter = AppAdapter(
             emptyList(),
@@ -230,7 +238,7 @@ class MainActivity : AppCompatActivity() {
         if (currentMode == FirewallMode.VPN) {
             startVpnService()
         } else {
-            checkShizukuAndApplyAll()
+            checkShizukuAndApplyAll(silent = false)
         }
     }
 
@@ -288,9 +296,9 @@ class MainActivity : AppCompatActivity() {
         Shizuku.addBinderDeadListener(shizukuBinderDeadListener)
     }
 
-    private fun checkShizukuPermission(): Boolean {
+    private fun checkShizukuPermission(silent: Boolean = false): Boolean {
         if (Shizuku.isPreV11()) {
-            Toast.makeText(this, "Shizuku version too old", Toast.LENGTH_SHORT).show()
+            if (!silent) Toast.makeText(this, "Shizuku version too old", Toast.LENGTH_SHORT).show()
             return false
         }
 
@@ -300,30 +308,32 @@ class MainActivity : AppCompatActivity() {
                 return true
             } else if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                  if (Shizuku.shouldShowRequestPermissionRationale()) {
-                    Toast.makeText(this, "Please grant permission in Shizuku", Toast.LENGTH_SHORT).show()
+                    if (!silent) Toast.makeText(this, "Please grant permission in Shizuku", Toast.LENGTH_SHORT).show()
                     return false
                 } else {
-                    Shizuku.requestPermission(shizukuRequestCode)
+                    if (!silent) Shizuku.requestPermission(shizukuRequestCode)
                     return false
                 }
             } else {
                  // Permission is granted, but service is not running
-                 Toast.makeText(this, "Shizuku service is not running", Toast.LENGTH_SHORT).show()
+                 if (!silent) Toast.makeText(this, "Shizuku service is not running", Toast.LENGTH_SHORT).show()
                  return false
             }
         } catch (e: Exception) {
             if (e is IllegalStateException) {
-                Toast.makeText(this, "Shizuku not running or not found", Toast.LENGTH_SHORT).show()
+                if (!silent) Toast.makeText(this, "Shizuku not running or not found", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Shizuku error: ${e.message}", Toast.LENGTH_SHORT).show()
+                if (!silent) Toast.makeText(this, "Shizuku error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
             return false
         }
     }
 
-    private fun checkShizukuAndApplyAll() {
-        if (checkShizukuPermission()) {
-            Toast.makeText(this, "Applying Shizuku rules.", Toast.LENGTH_SHORT).show()
+    private fun checkShizukuAndApplyAll(silent: Boolean = false) {
+        if (checkShizukuPermission(silent)) {
+            if (!silent) {
+                Toast.makeText(this, "Applying Shizuku rules.", Toast.LENGTH_SHORT).show()
+            }
             lifecycleScope.launch(Dispatchers.IO) {
                 ShizukuManager.applyAllRules(this@MainActivity, prefs)
             }
@@ -729,7 +739,12 @@ class MainActivity : AppCompatActivity() {
                 if (currentMode == FirewallMode.VPN) {
                     forceVpnRestart()
                 } else {
-                    checkShizukuAndApplyAll()
+                    //Only apply rules if the firewall is actually enabled!
+                    if (prefs.isFirewallEnabled()) {
+                        checkShizukuAndApplyAll(silent = false)
+                    } else {
+                        Toast.makeText(this, "Firewall is disabled", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 true
             }

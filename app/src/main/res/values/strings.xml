@@ -52,7 +52,7 @@
     <string name="help_vpn_title">2. VPN Mode</string>
     <string name="help_vpn_desc">This mode runs a local VPN service on your phone. All app traffic passes through this service, which blocks connections for the apps you select. This mode must be running constantly to work.</string>
     <string name="help_usage_title">3. How to Use</string>
-    <string name="help_usage_desc">The firewall is DISABLED by default.\n\n1. Press the \"Enable\" button on the main screen to start the firewall.\n\n2. Toggle the switch to select your mode (Shizuku or VPN).\n\n3. Tap the Wi-Fi or Data icons next to an app to block or allow its internet access for that mode. for Shizuku both are linked for now.\n\nAfter a reboot, you must open this app (and Shizuku, if used) and press \"Enable\" again to re-apply your settings. hit refresh button in the app, enable/disable or clear cache and force stop and reboot to troubleshoot.\n\n Made by shynoid/shayan. </string>
+    <string name="help_usage_desc">The firewall is DISABLED by default.\n\n1. Press the \"Enable\" button on the main screen to start the firewall.\n\n2. Toggle the switch to select your mode (Shizuku or VPN).\n\n3. Tap the Wi-Fi or Data icons next to an app to block or allow its internet access for that mode. for Shizuku both are linked for now.\n\nAfter a reboot, you must open this app (first Shizuku app, if used) to re-apply your settings. hit refresh button in the app, enable/disable or clear cache and force stop and reboot to troubleshoot.\n\n Made by shynoid/shayan. </string>
     <string name="help_donate_button">Donate Bitcoin</string>
     <string name="help_donate_toast">Bitcoin Address Copied to Clipboard</string>
 

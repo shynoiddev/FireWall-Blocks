@@ -11,8 +11,8 @@ android {
         applicationId "com.shayan.firewall"
         minSdk 30
         targetSdk 34
-        versionCode 3
-        versionName "1.2.shynoid"
+        versionCode 4
+        versionName "1.3.shynoid"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
