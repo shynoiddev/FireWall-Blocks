@@ -19,6 +19,17 @@
     <string name="menu_reboot_reminder">Reminder after reboot</string>
     <string name="menu_help">Help and more</string>
     
+    <!-- New Menu Items -->
+    <string name="menu_open_shizuku">Open Shizuku</string>
+    <string name="menu_download_shizuku">Download Shizuku</string>
+    
+    <!-- Shizuku Prompt Bar -->
+    <string name="prompt_shizuku_open">Open Shizuku</string>
+    <string name="prompt_shizuku_download">Download Shizuku</string>
+    <string name="prompt_action_open">Open</string>
+    <string name="prompt_action_download">Download</string>
+    <string name="prompt_action_cancel">Cancel</string>
+    
     <!-- Import/Export -->
     <string name="menu_export">Export Settings</string>
     <string name="menu_import">Import Settings</string>
@@ -52,7 +63,7 @@
     <string name="help_vpn_title">2. VPN Mode</string>
     <string name="help_vpn_desc">This mode runs a local VPN service on your phone. All app traffic passes through this service, which blocks connections for the apps you select. This mode must be running constantly to work.</string>
     <string name="help_usage_title">3. How to Use</string>
-    <string name="help_usage_desc">The firewall is DISABLED by default.\n\n1. Press the \"Enable\" button on the main screen to start the firewall.\n\n2. Toggle the switch to select your mode (Shizuku or VPN).\n\n3. Tap the Wi-Fi or Data icons next to an app to block or allow its internet access for that mode. for Shizuku both are linked for now.\n\nAfter a reboot, you must open this app (first Shizuku app, if used) to re-apply your settings. hit refresh button in the app, enable/disable or clear cache and force stop and reboot to troubleshoot.\n\n Made by shynoid/shayan. </string>
+    <string name="help_usage_desc">The firewall is DISABLED by default.\n\n1. Press the \"Enable\" button on the main screen to start the firewall.\n\n2. Toggle the switch to select your mode (Shizuku or VPN,Which can be used independently).\n\n3. Tap the Wi-Fi or Data icons next to an app to block or allow its internet access for that mode. for Shizuku both are linked for now.\n\nAfter a reboot, you must open this app (first Shizuku app, if used) to re-apply your settings. hit refresh button in the app, enable/disable or clear cache and force stop and reboot to troubleshoot.\n\n Made by shynoid/shayan. </string>
     <string name="help_donate_button">Donate Bitcoin</string>
     <string name="help_donate_toast">Bitcoin Address Copied to Clipboard</string>
 
@@ -68,5 +79,4 @@
     <string name="content_desc_data_toggle">Toggle Mobile Data access</string>
     <string name="content_desc_back_arrow">Back</string>
 </resources>
-
 

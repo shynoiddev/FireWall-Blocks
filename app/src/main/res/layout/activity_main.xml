@@ -94,5 +94,60 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Shizuku Prompt Bar -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_shizuku_prompt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="@color/selected_grey"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/text_shizuku_prompt"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/prompt_shizuku_open"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+
+            <!-- Action Button -->
+            <Button
+                android:id="@+id/btn_prompt_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/prompt_action_open"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:textColor="@color/white"
+                android:minHeight="48dp"
+                android:minWidth="48dp" />
+
+            <Button
+                android:id="@+id/btn_prompt_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/prompt_action_cancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:textColor="@color/light_grey"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
+
 

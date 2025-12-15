@@ -12,6 +12,8 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -20,6 +22,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.RadioGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -27,6 +30,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
@@ -49,6 +53,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loadingContainer: LinearLayout
     private lateinit var switchMode: SwitchMaterial
     private lateinit var buttonMasterToggle: Button
+    
+    // Shizuku Prompt Bar Views
+    private lateinit var cardShizukuPrompt: CardView
+    private lateinit var textShizukuPrompt: TextView
+    private lateinit var btnPromptAction: Button
+    private lateinit var btnPromptCancel: Button
 
     private lateinit var prefs: FirewallPreferences
     private var currentMode = FirewallMode.SHIZUKU
@@ -63,6 +73,16 @@ class MainActivity : AppCompatActivity() {
 
     private val vpnRequestCode = 101
     private val shizukuRequestCode = 202
+    
+    // Handler for hiding the prompt bar automatically
+    private val handler = Handler(Looper.getMainLooper())
+    private val hidePromptRunnable = Runnable {
+        cardShizukuPrompt.visibility = View.GONE
+    }
+    
+    // Shizuku Package
+    private val SHIZUKU_PACKAGE = "moe.shizuku.privileged.api"
+    private val SHIZUKU_GITHUB = "https://github.com/RikkaApps/Shizuku"
 
     private val createFileLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -95,8 +115,8 @@ class MainActivity : AppCompatActivity() {
             ShizukuManager.clearUidCache() 
             if (requestCode == shizukuRequestCode) {
                 if (grantResult == PackageManager.PERMISSION_GRANTED) {
-                    if (prefs.isFirewallEnabled()) {
-                        applyAllRules()
+                    if (prefs.isShizukuEnabled()) {
+                        applyAllRulesShizuku()
                     }
                 } else {
                     Toast.makeText(this, "Shizuku permission denied", Toast.LENGTH_SHORT).show()
@@ -108,8 +128,8 @@ class MainActivity : AppCompatActivity() {
         override fun onBinderReceived() {
             Log.d("MainActivity", "Shizuku Binder Received")
             ShizukuManager.clearUidCache() 
-            if (prefs.isFirewallEnabled() && currentMode == FirewallMode.SHIZUKU) {
-                applyAllRules()
+            if (prefs.isShizukuEnabled() && currentMode == FirewallMode.SHIZUKU) {
+                applyAllRulesShizuku()
             }
         }
     }
@@ -145,6 +165,13 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         setupAdapter()
+        
+        // Initialize Prompt Views
+        cardShizukuPrompt = findViewById(R.id.card_shizuku_prompt)
+        textShizukuPrompt = findViewById(R.id.text_shizuku_prompt)
+        btnPromptAction = findViewById(R.id.btn_prompt_action)
+        btnPromptCancel = findViewById(R.id.btn_prompt_cancel)
+        
         switchMode = findViewById(R.id.switch_mode)
         buttonMasterToggle = findViewById(R.id.button_master_toggle)
 
@@ -158,8 +185,12 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         
-        if (currentMode == FirewallMode.SHIZUKU && prefs.isFirewallEnabled()) {
-             checkShizukuAndApplyAll(silent = true)
+        // Logic: On open/resume, if Shizuku mode is enabled, try to reapply rules.
+        // isUserInitiated = false:
+        // - IF SUCCESS: Silent (no toast).
+        // - IF FAIL (Not running/installed): SHOWS ERROR TOAST & PROMPT BAR.
+        if (prefs.isShizukuEnabled()) {
+             checkShizukuAndApplyAll(isUserInitiated = false)
         }
     }
 
@@ -189,36 +220,50 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSwitch() {
         switchMode.setOnCheckedChangeListener { _, isChecked ->
+            // Change UI mode only
             val newMode = if (isChecked) FirewallMode.VPN else FirewallMode.SHIZUKU
-
-            if (newMode == FirewallMode.SHIZUKU) {
-                stopVpnService()
-            }
-
             currentMode = newMode
+            
             switchMode.text = if (isChecked) getString(R.string.mode_vpn) else getString(R.string.mode_shizuku)
 
+            // Update Master Button text based on the new mode's independent state
+            updateMasterButton()
+            
+            // Reload list for the new mode's preferences
             invalidateOptionsMenu()
             loadApps()
-
-            onMasterToggleChanged(prefs.isFirewallEnabled())
         }
     }
 
     private fun setupMasterToggle() {
-        updateMasterButton(prefs.isFirewallEnabled())
+        updateMasterButton()
 
         buttonMasterToggle.setOnClickListener {
-            val isCurrentlyEnabled = prefs.isFirewallEnabled()
-            val newEnabledState = !isCurrentlyEnabled
+            val isEnabledInCurrentMode = prefs.isEnabledForMode(currentMode)
+            val newEnabledState = !isEnabledInCurrentMode
 
-            prefs.setFirewallEnabled(newEnabledState)
-            updateMasterButton(newEnabledState)
-            onMasterToggleChanged(newEnabledState)
+            if (currentMode == FirewallMode.SHIZUKU) {
+                prefs.setShizukuEnabled(newEnabledState)
+                if (newEnabledState) {
+                    checkShizukuAndApplyAll(isUserInitiated = true)
+                } else {
+                    checkShizukuAndRemoveAll()
+                }
+            } else {
+                prefs.setVpnEnabled(newEnabledState)
+                if (newEnabledState) {
+                    startVpnService()
+                } else {
+                    stopVpnService()
+                }
+            }
+            
+            updateMasterButton()
         }
     }
 
-    private fun updateMasterButton(isEnabled: Boolean) {
+    private fun updateMasterButton() {
+        val isEnabled = prefs.isEnabledForMode(currentMode)
         buttonMasterToggle.text = if (isEnabled) {
             getString(R.string.master_disable)
         } else {
@@ -226,32 +271,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun onMasterToggleChanged(isEnabled: Boolean) {
-        if (isEnabled) {
-            applyAllRules()
-        } else {
-            removeAllRules()
-        }
+    // This method is called internally for async logic
+    private fun applyAllRulesShizuku() {
+         lifecycleScope.launch(Dispatchers.IO) {
+            ShizukuManager.applyAllRules(this@MainActivity, prefs)
+         }
     }
 
-    private fun applyAllRules() {
-        if (currentMode == FirewallMode.VPN) {
-            startVpnService()
-        } else {
-            checkShizukuAndApplyAll(silent = false)
-        }
-    }
-
-    private fun removeAllRules() {
-        if (currentMode == FirewallMode.VPN) {
-            stopVpnService()
-        } else {
-            checkShizukuAndRemoveAll()
-        }
-    }
 
     private fun forceVpnRestart() {
-        if (!prefs.isFirewallEnabled() || currentMode != FirewallMode.VPN) {
+        if (!prefs.isVpnEnabled()) {
             return
         }
 
@@ -296,9 +325,85 @@ class MainActivity : AppCompatActivity() {
         Shizuku.addBinderDeadListener(shizukuBinderDeadListener)
     }
 
-    private fun checkShizukuPermission(silent: Boolean = false): Boolean {
+    private fun isShizukuInstalled(): Boolean {
+        return try {
+            packageManager.getPackageInfo(SHIZUKU_PACKAGE, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    private fun showShizukuPromptBar() {
+        // Clear any existing timer
+        handler.removeCallbacks(hidePromptRunnable)
+        
+        val isInstalled = isShizukuInstalled()
+        
+        // Logic to update text based on state
+        if (isInstalled) {
+            textShizukuPrompt.text = getString(R.string.prompt_shizuku_open)
+            btnPromptAction.text = getString(R.string.prompt_action_open)
+            btnPromptAction.setOnClickListener {
+                try {
+                    val intent = packageManager.getLaunchIntentForPackage(SHIZUKU_PACKAGE)
+                    if (intent != null) {
+                        startActivity(intent)
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Could not open Shizuku", Toast.LENGTH_SHORT).show()
+                }
+                cardShizukuPrompt.visibility = View.GONE
+            }
+        } else {
+            textShizukuPrompt.text = getString(R.string.prompt_shizuku_download)
+            btnPromptAction.text = getString(R.string.prompt_action_download)
+            btnPromptAction.setOnClickListener {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SHIZUKU_GITHUB))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Could not open browser", Toast.LENGTH_SHORT).show()
+                }
+                cardShizukuPrompt.visibility = View.GONE
+            }
+        }
+        
+        btnPromptCancel.setOnClickListener {
+            cardShizukuPrompt.visibility = View.GONE
+        }
+        
+        cardShizukuPrompt.visibility = View.VISIBLE
+        
+        // Hide after 10 seconds
+        handler.postDelayed(hidePromptRunnable, 10000)
+    }
+    
+    private fun executeOpenOrDownloadShizuku() {
+         if (isShizukuInstalled()) {
+             try {
+                val intent = packageManager.getLaunchIntentForPackage(SHIZUKU_PACKAGE)
+                if (intent != null) startActivity(intent)
+             } catch (e: Exception) {
+                 Toast.makeText(this, "Error opening Shizuku", Toast.LENGTH_SHORT).show()
+             }
+         } else {
+             try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SHIZUKU_GITHUB))
+                startActivity(intent)
+             } catch (e: Exception) {
+                 Toast.makeText(this, "Error opening link", Toast.LENGTH_SHORT).show()
+             }
+         }
+    }
+
+    /**
+     * Checks Shizuku permission and status.
+     * @param showErrorUI If true, shows Toast and Prompt Bar on failure.
+     */
+    private fun checkShizukuPermission(showErrorUI: Boolean = false): Boolean {
         if (Shizuku.isPreV11()) {
-            if (!silent) Toast.makeText(this, "Shizuku version too old", Toast.LENGTH_SHORT).show()
+            if (showErrorUI) Toast.makeText(this, "Shizuku version too old", Toast.LENGTH_SHORT).show()
             return false
         }
 
@@ -308,30 +413,45 @@ class MainActivity : AppCompatActivity() {
                 return true
             } else if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                  if (Shizuku.shouldShowRequestPermissionRationale()) {
-                    if (!silent) Toast.makeText(this, "Please grant permission in Shizuku", Toast.LENGTH_SHORT).show()
+                    if (showErrorUI) {
+                        Toast.makeText(this, "Please grant permission in Shizuku", Toast.LENGTH_SHORT).show()
+                        showShizukuPromptBar() // Show bar
+                    }
                     return false
                 } else {
-                    if (!silent) Shizuku.requestPermission(shizukuRequestCode)
+                    if (showErrorUI) Shizuku.requestPermission(shizukuRequestCode)
                     return false
                 }
             } else {
-                 // Permission is granted, but service is not running
-                 if (!silent) Toast.makeText(this, "Shizuku service is not running", Toast.LENGTH_SHORT).show()
+                 // Permission granted, but service not running
+                 if (showErrorUI) {
+                     Toast.makeText(this, "Shizuku not running or not found", Toast.LENGTH_SHORT).show()
+                     showShizukuPromptBar() // Show bar
+                 }
                  return false
             }
         } catch (e: Exception) {
             if (e is IllegalStateException) {
-                if (!silent) Toast.makeText(this, "Shizuku not running or not found", Toast.LENGTH_SHORT).show()
+                if (showErrorUI) {
+                    Toast.makeText(this, "Shizuku not running or not found", Toast.LENGTH_SHORT).show()
+                    showShizukuPromptBar() // Show bar
+                }
             } else {
-                if (!silent) Toast.makeText(this, "Shizuku error: ${e.message}", Toast.LENGTH_SHORT).show()
+                if (showErrorUI) Toast.makeText(this, "Shizuku error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
             return false
         }
     }
 
-    private fun checkShizukuAndApplyAll(silent: Boolean = false) {
-        if (checkShizukuPermission(silent)) {
-            if (!silent) {
+    /**
+     * Checks permissions and applies rules.
+     * @param isUserInitiated If true, show "Applying rules" toast on success.
+     */
+    private fun checkShizukuAndApplyAll(isUserInitiated: Boolean = false) {
+        // ALWAYS pass true for showErrorUI so failures are noisy (Startup & Manual)
+        if (checkShizukuPermission(showErrorUI = true)) {
+            // ONLY show success toast if user initiated it (Refresh/Toggle)
+            if (isUserInitiated) {
                 Toast.makeText(this, "Applying Shizuku rules.", Toast.LENGTH_SHORT).show()
             }
             lifecycleScope.launch(Dispatchers.IO) {
@@ -341,7 +461,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkShizukuAndRemoveAll() {
-        if (checkShizukuPermission()) {
+        if (checkShizukuPermission(showErrorUI = true)) {
             Toast.makeText(this, "Removing Shizuku rules.", Toast.LENGTH_SHORT).show()
             lifecycleScope.launch(Dispatchers.IO) {
                 ShizukuManager.removeAllRules(this@MainActivity)
@@ -350,7 +470,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkShizukuAndApplyRule(app: AppInfo) {
-        if (checkShizukuPermission()) {
+        // For individual toggles
+        if (checkShizukuPermission(showErrorUI = true)) {
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val uid = packageManager.getApplicationInfo(app.packageName, 0).uid
@@ -366,6 +487,7 @@ class MainActivity : AppCompatActivity() {
         Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener)
         Shizuku.removeBinderReceivedListener(shizukuBinderListener)
         Shizuku.removeBinderDeadListener(shizukuBinderDeadListener)
+        handler.removeCallbacks(hidePromptRunnable) // Clean up handler
         super.onDestroy()
     }
 
@@ -466,7 +588,7 @@ class MainActivity : AppCompatActivity() {
             targetApps = listOf(app)
         }
 
-        val isFirewallEnabled = prefs.isFirewallEnabled()
+        val isEnabledForCurrentMode = prefs.isEnabledForMode(currentMode)
 
         for (targetApp in targetApps) {
             prefs.setWifiBlocked(currentMode, targetApp.packageName, finalWifiState)
@@ -475,14 +597,14 @@ class MainActivity : AppCompatActivity() {
             targetApp.isWifiBlocked = finalWifiState
             targetApp.isDataBlocked = finalDataState
 
-            if (isFirewallEnabled) {
+            if (isEnabledForCurrentMode) {
                 if (currentMode == FirewallMode.SHIZUKU) {
                     checkShizukuAndApplyRule(targetApp)
                 }
             }
         }
 
-        if (isFirewallEnabled && currentMode == FirewallMode.VPN) {
+        if (isEnabledForCurrentMode && currentMode == FirewallMode.VPN) {
             forceVpnRestart()
         }
 
@@ -620,18 +742,21 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, getString(R.string.import_success), Toast.LENGTH_SHORT).show()
 
                     loadApps()
-                    if (prefs.isFirewallEnabled()) {
-                        if (currentMode == FirewallMode.VPN) {
-                            forceVpnRestart()
-                        } else {
-                            lifecycleScope.launch(Dispatchers.IO) {
-                                try {
-                                    ShizukuManager.refreshConnectivityService()
-                                    delay(150)
-                                    ShizukuManager.applyAllRules(this@MainActivity, prefs)
-                                } catch (e: Exception) {
-                                    Log.e("MainActivity", "Error re-applying Shizuku rules after import", e)
-                                }
+                    // Update master button to reflect potentially imported state
+                    updateMasterButton()
+                    
+                    // Re-apply rules if needed based on imported state
+                    if (prefs.isVpnEnabled()) {
+                        forceVpnRestart()
+                    }
+                    if (prefs.isShizukuEnabled()) {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            try {
+                                ShizukuManager.refreshConnectivityService()
+                                delay(150)
+                                ShizukuManager.applyAllRules(this@MainActivity, prefs)
+                            } catch (e: Exception) {
+                                Log.e("MainActivity", "Error re-applying Shizuku rules after import", e)
                             }
                         }
                     }
@@ -715,11 +840,29 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         
+        // Handle Copy Text
         val copyItem = menu?.findItem(R.id.menu_copy_settings)
         if (currentMode == FirewallMode.VPN) {
             copyItem?.title = getString(R.string.menu_copy_shizuku_to_vpn)
         } else {
             copyItem?.title = getString(R.string.menu_copy_vpn_to_shizuku)
+        }
+        
+        // Handle Dynamic Mode Options
+        val shizukuActionItem = menu?.findItem(R.id.menu_shizuku_action)
+
+        if (currentMode == FirewallMode.SHIZUKU) {
+            shizukuActionItem?.isVisible = true
+            
+            // Set dynamic title based on installation
+            if (isShizukuInstalled()) {
+                shizukuActionItem?.title = getString(R.string.menu_open_shizuku)
+            } else {
+                shizukuActionItem?.title = getString(R.string.menu_download_shizuku)
+            }
+        } else {
+            // VPN Mode
+            shizukuActionItem?.isVisible = false
         }
         
         val reminderItem = menu?.findItem(R.id.menu_reboot_reminder)
@@ -739,13 +882,17 @@ class MainActivity : AppCompatActivity() {
                 if (currentMode == FirewallMode.VPN) {
                     forceVpnRestart()
                 } else {
-                    //Only apply rules if the firewall is actually enabled!
-                    if (prefs.isFirewallEnabled()) {
-                        checkShizukuAndApplyAll(silent = false)
+                    // Only apply rules if Shizuku is actually enabled!
+                    if (prefs.isShizukuEnabled()) {
+                        checkShizukuAndApplyAll(isUserInitiated = true)
                     } else {
-                        Toast.makeText(this, "Firewall is disabled", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Shizuku mode is disabled", Toast.LENGTH_SHORT).show()
                     }
                 }
+                true
+            }
+            R.id.menu_shizuku_action -> {
+                executeOpenOrDownloadShizuku()
                 true
             }
             R.id.menu_copy_settings -> {

@@ -26,6 +26,14 @@
                 android:id="@+id/menu_refresh"
                 android:title="@string/menu_refresh"
                 app:showAsAction="never" />
+
+            <!-- New: Shizuku Open/Download Action (Visible in Shizuku Mode) -->
+            <item
+                android:id="@+id/menu_shizuku_action"
+                android:title="@string/menu_open_shizuku"
+                android:visible="false"
+                app:showAsAction="never" />
+
             <item
                 android:id="@+id/menu_copy_settings"
                 android:title="@string/menu_copy_vpn_to_shizuku"

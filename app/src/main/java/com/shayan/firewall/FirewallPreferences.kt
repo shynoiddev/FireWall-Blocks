@@ -64,12 +64,27 @@ class FirewallPreferences(context: Context) {
     
     // --- Master Firewall State ---
     
-    fun setFirewallEnabled(isEnabled: Boolean) {
-        defaultPrefs.edit().putBoolean("is_firewall_enabled", isEnabled).apply()
+    // Shizuku Enabled State
+    fun setShizukuEnabled(isEnabled: Boolean) {
+        defaultPrefs.edit().putBoolean("is_shizuku_enabled", isEnabled).apply()
     }
     
-    fun isFirewallEnabled(): Boolean {
-        return defaultPrefs.getBoolean("is_firewall_enabled", false)
+    fun isShizukuEnabled(): Boolean {
+        return defaultPrefs.getBoolean("is_shizuku_enabled", false)
+    }
+
+    // VPN Enabled State
+    fun setVpnEnabled(isEnabled: Boolean) {
+        defaultPrefs.edit().putBoolean("is_vpn_enabled", isEnabled).apply()
+    }
+    
+    fun isVpnEnabled(): Boolean {
+        return defaultPrefs.getBoolean("is_vpn_enabled", false)
+    }
+    
+    // Helper to get state based on mode
+    fun isEnabledForMode(mode: FirewallMode): Boolean {
+        return if (mode == FirewallMode.SHIZUKU) isShizukuEnabled() else isVpnEnabled()
     }
     
     // --- Sort Preference ---
@@ -133,6 +148,12 @@ class FirewallPreferences(context: Context) {
             masterJson.put(FirewallMode.SHIZUKU.key, shizukuJson)
             masterJson.put(FirewallMode.VPN.key, vpnJson)
             
+            // Also export enabled states
+            val statesJson = JSONObject()
+            statesJson.put("shizuku_enabled", isShizukuEnabled())
+            statesJson.put("vpn_enabled", isVpnEnabled())
+            masterJson.put("states", statesJson)
+            
             masterJson.toString(2) // Indent for readability
         } catch (e: Exception) {
             Log.e(TAG, "Error exporting settings", e)
@@ -160,6 +181,17 @@ class FirewallPreferences(context: Context) {
                 vpnEditor.putBoolean(key, vpnJson.getBoolean(key))
             }
             vpnEditor.commit()
+            
+            // Import states if present
+            if (masterJson.has("states")) {
+                val statesJson = masterJson.getJSONObject("states")
+                if (statesJson.has("shizuku_enabled")) {
+                    setShizukuEnabled(statesJson.getBoolean("shizuku_enabled"))
+                }
+                if (statesJson.has("vpn_enabled")) {
+                    setVpnEnabled(statesJson.getBoolean("vpn_enabled"))
+                }
+            }
             
             true
         } catch (e: Exception) {
