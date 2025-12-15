@@ -9,8 +9,8 @@ A simple, open-source Android firewall that blocks app internet access using eit
 * **Import/Export:** Save and load your firewall rules as a simple .json file.  
 * **Sorting:** sort based on user and system apps
 * **Efficient:** app doesn't need to be constantly running in the background.
-* **Elegant Reapplying on startup (hassle free user experience) ** 
-* **App search and more **
+* **Elegant Reapplying on startup (hassle free user experience)** 
+* **App search and more**
 
 ## **How to Use**
 
