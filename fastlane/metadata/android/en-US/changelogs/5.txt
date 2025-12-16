@@ -1,0 +1,6 @@
+-Independent Mode Control Improvements : Shizuku and VPN modes now operate independently. You can switch the view between them without disabling the active firewall. The "Enable/Disable" button now controls only the mode currently displayed.
+-Smart Shizuku Prompt: Added a non-intrusive bottom bar to quickly "Open" or "Download" Shizuku if the service is not running or the app is missing.
+-Quick Menu Access: Added an "Open Shizuku" shortcut directly to the 3-dots menu (in Shizuku mode).
+-Improved Startup Logic: The app now automatically and silently attempts to re-apply Shizuku rules on startup if enabled, only alerting you if the Shizuku service isn't running.
+-UI Improvements: Fixed button text visibility in popup alerts and general stability improvements.
+-Other bug fixes.
