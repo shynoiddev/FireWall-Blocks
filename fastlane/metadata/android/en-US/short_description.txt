@@ -1,0 +1,1 @@
+Simple, open-source firewall blocking internet access via Shizuku or VPN.
