@@ -1,0 +1,1 @@
+Bug Fixes and making the app ready to release on F-droid.
