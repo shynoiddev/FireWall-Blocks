@@ -7,12 +7,16 @@ android {
     namespace 'com.shayan.firewall'
     compileSdk 34
 
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
     defaultConfig {
         applicationId "com.shayan.firewall"
         minSdk 30
         targetSdk 34
-        versionCode 5
-        versionName "1.4.shynoid"
+        versionCode 6
+        versionName "1.4.1.shynoid"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
