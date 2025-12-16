@@ -11,8 +11,8 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 6,
-      "versionName": "1.4.1.shynoid",
+      "versionCode": 7,
+      "versionName": "1.4.2.shynoid",
       "outputFile": "app-release.apk"
     }
   ],
