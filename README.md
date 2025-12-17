@@ -30,4 +30,21 @@ A simple, open-source Android firewall that blocks app internet access using eit
 
 ## **Download**
 
-*You can find the latest installable APK file on our [Releases page](https://github.com/shynoiddev/FireWall-Blocks/releases).*
+<p>
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.shayan.firewall">
+    <img height="50" alt="Get it on IzzyOnDroid" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png">
+  </a>
+</p>
+
+Also, you can find the latest installable APK file on our [Releases page](https://github.com/shynoiddev/FireWall-Blocks/releases).
+
+## **Support**
+
+If you like the app and want to support its development, you can donate via Bitcoin:
+
+<a href="#support">
+  <img src="https://img.shields.io/badge/Bitcoin-Address-ff9900?style=for-the-badge&logo=bitcoin&logoColor=white" alt="Bitcoin Address">
+</a>
+
+```text
+15GVxMuexgbDapqDDSxSi6h7EDsN2d7wdr
