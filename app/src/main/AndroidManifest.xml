@@ -49,7 +49,8 @@
             
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -59,6 +60,13 @@
         <activity
             android:name=".HelpActivity"
             android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Network Monitoring Activity -->
+        <activity
+            android:name=".NetworkMonitoringActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
             android:parentActivityName=".MainActivity" />
             
         <!-- VPN Service -->

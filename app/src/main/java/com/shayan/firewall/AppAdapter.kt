@@ -1,6 +1,7 @@
 package com.shayan.firewall
 
 import android.graphics.Color
+import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,7 +27,6 @@ class AppAdapter(
     override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
         val appInfo = appList[position]
         holder.bind(appInfo)
-        // holder.itemView.isActivated = appInfo.isSelected
     }
 
     override fun getItemCount(): Int = appList.size
@@ -36,7 +36,6 @@ class AppAdapter(
     }
 
     fun updateApps(newAppList: List<AppInfo>) {
-        // Use a more efficient DiffUtil later if performance becomes an issue
         this.appList = newAppList
         notifyDataSetChanged()
     }
@@ -54,30 +53,33 @@ class AppAdapter(
         private val colorLightGrey = ContextCompat.getColor(itemView.context, R.color.light_grey)
         private val colorDarkGrey = ContextCompat.getColor(itemView.context, R.color.dark_grey)
         private val colorSelectedGrey = ContextCompat.getColor(itemView.context, R.color.selected_grey)
-
+         
+        // Semantic Colors
+        private val colorRedSystem = ContextCompat.getColor(itemView.context, R.color.red_system)
+        private val colorYellowDisabled = ContextCompat.getColor(itemView.context, R.color.yellow_disabled)
 
         init {
             itemView.setOnClickListener {
-                val position = adapterPosition
+                val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onItemClick(appList[position])
                 }
             }
             itemView.setOnLongClickListener {
-                val position = adapterPosition
+                val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onItemLongClick(appList[position])
                 }
-                true // Consume the long click
+                true 
             }
             wifiIcon.setOnClickListener {
-                val position = adapterPosition
+                val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onWifiClick(appList[position])
                 }
             }
             dataIcon.setOnClickListener {
-                val position = adapterPosition
+                val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onDataClick(appList[position])
                 }
@@ -87,41 +89,44 @@ class AppAdapter(
         fun bind(appInfo: AppInfo) {
             appIcon.setImageDrawable(appInfo.appIcon)
             appName.text = appInfo.appName
+            
+            // Clean up paint flags due to View recycling
+            appName.paintFlags = appName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+
+            // Resolve base text color (priority: uninstalled > disabled > system > regular)
+            val semanticTextColor = when {
+                appInfo.isUninstalled -> colorGrey
+                !appInfo.isEnabled -> colorYellowDisabled
+                appInfo.isSystemApp -> colorRedSystem
+                else -> if (appInfo.isSelected) colorWhite else colorLightGrey
+            }
+
+            appName.setTextColor(semanticTextColor)
+
+            if (appInfo.isUninstalled) {
+                appName.paintFlags = appName.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+            }
 
             if (appInfo.isSelected) {
-                // --- SELECTED STATE ---
                 itemView.setBackgroundColor(colorSelectedGrey)
-                appName.setTextColor(colorWhite)
-
-                // Set icons to white for contrast
-                wifiIcon.setImageResource(R.drawable.ic_wifi)
-                wifiIcon.setColorFilter(colorWhite)
-                
-                dataIcon.setImageResource(R.drawable.ic_data)
-                dataIcon.setColorFilter(colorWhite)
-                
             } else {
-                // --- DEFAULT STATE ---
                 itemView.setBackgroundColor(colorDarkGrey)
-                appName.setTextColor(colorLightGrey)
+            }
 
-                // Set Wi-Fi icon state (Blue if allowed, Grey if blocked)
-                wifiIcon.setImageResource(R.drawable.ic_wifi)
-                if (appInfo.isWifiBlocked) {
-                    wifiIcon.setColorFilter(colorGrey)
-                } else {
-                    wifiIcon.setColorFilter(colorBlue)
-                }
+            // Always maintain the actual blocked/allowed color state for the icons
+            wifiIcon.setImageResource(R.drawable.ic_wifi)
+            if (appInfo.isWifiBlocked) {
+                wifiIcon.setColorFilter(colorGrey)
+            } else {
+                wifiIcon.setColorFilter(colorBlue)
+            }
 
-                // Set Data icon state (Blue if allowed, Grey if blocked)
-                dataIcon.setImageResource(R.drawable.ic_data)
-                if (appInfo.isDataBlocked) {
-                    dataIcon.setColorFilter(colorGrey)
-                } else {
-                    dataIcon.setColorFilter(colorBlue)
-                }
+            dataIcon.setImageResource(R.drawable.ic_data)
+            if (appInfo.isDataBlocked) {
+                dataIcon.setColorFilter(colorGrey)
+            } else {
+                dataIcon.setColorFilter(colorBlue)
             }
         }
     }
 }
-

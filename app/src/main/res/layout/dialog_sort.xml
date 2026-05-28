@@ -33,7 +33,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/sort_show_system"
-            android:textColor="@color/light_grey" />
+            android:textColor="@color/red_system" />
 
         <RadioButton
             android:id="@+id/radio_sort_user"
@@ -48,6 +48,20 @@
             android:layout_height="wrap_content"
             android:text="@string/sort_show_internet"
             android:textColor="@color/light_grey" />
+            
+        <RadioButton
+            android:id="@+id/radio_sort_disabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_show_disabled"
+            android:textColor="@color/yellow_disabled" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_uninstalled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sort_show_uninstalled"
+            android:textColor="@color/icon_grey_disabled" />
 
     </RadioGroup>
 
@@ -66,5 +80,12 @@
         android:textColor="@color/light_grey"
         android:layout_marginBottom="8dp"/>
 
-</LinearLayout>
+    <CheckBox
+        android:id="@+id/checkbox_sort_blocked_last"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/sort_show_blocked_last"
+        android:textColor="@color/light_grey"
+        android:layout_marginBottom="8dp"/>
 
+</LinearLayout>

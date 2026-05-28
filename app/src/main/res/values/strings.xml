@@ -14,12 +14,11 @@
     <string name="menu_sort">Sort</string>
     <string name="menu_search">Search</string>
     <string name="menu_refresh">Refresh</string>
+    <string name="menu_network_monitoring">Network monitoring</string>
     <string name="menu_copy_vpn_to_shizuku">Copy VPN settings</string>
     <string name="menu_copy_shizuku_to_vpn">Copy Shizuku settings</string>
     <string name="menu_reboot_reminder">Reminder after reboot</string>
     <string name="menu_help">Help and more</string>
-    
-    <!-- New Menu Items -->
     <string name="menu_open_shizuku">Open Shizuku</string>
     <string name="menu_download_shizuku">Download Shizuku</string>
     
@@ -47,12 +46,33 @@
     <string name="sort_show_user">Show User Apps</string>
     <string name="sort_show_internet">Show Internet Apps Only</string>
     <string name="sort_show_blocked">Show Blocked First</string>
+    <string name="sort_show_blocked_last">Show Blocked Last</string>
+    <string name="sort_show_disabled">Show Disabled Apps</string>
+    <string name="sort_show_uninstalled">Show Uninstalled Apps</string>
 
     <!-- Selection Menu -->
     <string name="menu_select_all">Select All</string>
     <string name="selection_title_zero">Select items</string>
     <string name="selection_title_one">1 selected</string>
     <string name="selection_title_many">%d selected</string>
+    
+    <!-- Copy Settings Dialog Strings -->
+    <string name="dialog_copy_title">Replace Rules</string>
+    <string name="dialog_copy_message_to_shizuku">Are you sure you want to replace current rules with VPN mode\'s rules?</string>
+    <string name="dialog_copy_message_to_vpn">Are you sure you want to replace current rules with Shizuku mode\'s rules?</string>
+    <string name="action_replace">Replace</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- Network Monitoring -->
+    <string name="monitoring_dialog_title">Network Monitoring</string>
+    <string name="monitoring_dialog_message">You\'re entering network monitoring screen. Note that this feature will use Android\'s VPN service, and while in this screen all internet access of all apps will be cut off. You will be able to see all the apps that are trying to access the internet. You can stop the monitoring by hitting the back button.</string>
+    <string name="menu_stop_monitoring">Stop monitoring</string>
+    <string name="menu_exclude_blacklisted">Exclude blacklisted</string>
+    <string name="menu_include_blacklisted">Include blacklisted apps</string>
+    <string name="menu_clear_list">Clear list</string>
+    <string name="monitoring_pause">Pause</string>
+    <string name="monitoring_resume">Resume</string>
+    <string name="empty_monitoring_log">Waiting for network activity...</string>
 
     <!-- Help Activity -->
     <string name="help_title">Help and more</string>
@@ -64,6 +84,15 @@
     <string name="help_vpn_desc">This mode runs a local VPN service on your phone. All app traffic passes through this service, which blocks connections for the apps you select. This mode must be running constantly to work.</string>
     <string name="help_usage_title">3. How to Use</string>
     <string name="help_usage_desc">The firewall is DISABLED by default.\n\n1. Press the \"Enable\" button on the main screen to start the firewall.\n\n2. Toggle the switch to select your mode (Shizuku or VPN,Which can be used independently).\n\n3. Tap the Wi-Fi or Data icons next to an app to block or allow its internet access for that mode. for Shizuku both are linked for now.\n\nAfter a reboot, you must open this app (first Shizuku app, if used) to re-apply your settings. hit refresh button in the app, enable/disable or clear cache and force stop and reboot to troubleshoot.\n\n Made by shynoid/shayan. </string>
+    
+    <!-- App Status Colors Section -->
+    <string name="help_colors_title">4. App Status Colors</string>
+    <string name="help_colors_desc">Apps are color-coded in the list to help you quickly identify them:\n• Red: System App\n• Yellow: Disabled App\n• Grey with strike-through: Uninstalled App (with leftover rules)\n• White: Regular App</string>
+    
+    <!-- Network Monitoring Feature Section -->
+    <string name="help_monitoring_title">5. Network Monitoring</string>
+    <string name="help_monitoring_desc">Accessible from the top-right menu, this feature uses the VPN service to intercept and display all apps trying to access the internet in real-time. You can instantly block or allow apps directly from the monitoring screen.</string>
+    
     <string name="help_donate_button">Donate Bitcoin</string>
     <string name="help_donate_toast">Bitcoin Address Copied to Clipboard</string>
 
@@ -79,4 +108,3 @@
     <string name="content_desc_data_toggle">Toggle Mobile Data access</string>
     <string name="content_desc_back_arrow">Back</string>
 </resources>
-

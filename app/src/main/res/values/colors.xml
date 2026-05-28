@@ -12,5 +12,8 @@
     
     <!-- color for selected item background -->
     <color name="selected_grey">#3A3A3A</color>
+    
+    <!-- App Type Distinction Colors -->
+    <color name="red_system">#FF5252</color>
+    <color name="yellow_disabled">#FFD740</color>
 </resources>
-

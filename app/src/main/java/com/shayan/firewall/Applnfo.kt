@@ -13,6 +13,7 @@ data class AppInfo(
     val hasInternetPermission: Boolean,
     var isWifiBlocked: Boolean = false,
     var isDataBlocked: Boolean = false,
-    var isSelected: Boolean = false // Property for batch selection
+    var isSelected: Boolean = false, // Property for batch selection
+    val isEnabled: Boolean = true,
+    val isUninstalled: Boolean = false
 )
-

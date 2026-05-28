@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- When disabled, turn grey to indicate non-interactive -->
+    <item android:state_enabled="false" android:color="@color/icon_grey_disabled" />
     <!-- When on (checked), make thumb white to contrast blue track -->
     <item android:state_checked="true" android:color="@color/white" />
     <!-- When off (unchecked), make thumb light grey -->

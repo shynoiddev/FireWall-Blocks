@@ -54,11 +54,30 @@ class FirewallPreferences(context: Context) {
 
         toEditor.clear()
 
-        fromPrefs.all.forEach { (key, value) ->
-            if (value is Boolean) {
-                toEditor.putBoolean(key, value)
+        if (to == FirewallMode.SHIZUKU) {
+            // Shizuku links both wifi and data. If either is blocked in VPN, block both here.
+            val blockedPackages = mutableSetOf<String>()
+            fromPrefs.all.forEach { (key, value) ->
+                if (value is Boolean && value) {
+                    val packageName = key.substringBeforeLast('_')
+                    if (packageName.isNotEmpty()) {
+                        blockedPackages.add(packageName)
+                    }
+                }
+            }
+            
+            blockedPackages.forEach { pkg ->
+                toEditor.putBoolean(getKey(pkg, "wifi"), true)
+                toEditor.putBoolean(getKey(pkg, "data"), true)
+            }
+        } else {
+            fromPrefs.all.forEach { (key, value) ->
+                if (value is Boolean) {
+                    toEditor.putBoolean(key, value)
+                }
             }
         }
+        
         toEditor.commit()
     }
     
@@ -95,6 +114,14 @@ class FirewallPreferences(context: Context) {
     
     fun isSortBlockedFirst(): Boolean {
         return defaultPrefs.getBoolean("sort_blocked_first", false)
+    }
+
+    fun setSortBlockedLast(isBlockedLast: Boolean) {
+        defaultPrefs.edit().putBoolean("sort_blocked_last", isBlockedLast).apply()
+    }
+
+    fun isSortBlockedLast(): Boolean {
+        return defaultPrefs.getBoolean("sort_blocked_last", false)
     }
     
     // --- Reboot Reminder Preference ---
@@ -200,4 +227,3 @@ class FirewallPreferences(context: Context) {
         }
     }
 }
-

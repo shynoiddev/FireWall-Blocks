@@ -27,7 +27,11 @@
                 android:title="@string/menu_refresh"
                 app:showAsAction="never" />
 
-            <!-- New: Shizuku Open/Download Action (Visible in Shizuku Mode) -->
+            <item
+                android:id="@+id/menu_network_monitoring"
+                android:title="@string/menu_network_monitoring"
+                app:showAsAction="never" />
+
             <item
                 android:id="@+id/menu_shizuku_action"
                 android:title="@string/menu_open_shizuku"
@@ -64,4 +68,5 @@
         </menu>
     </item>
 </menu>
+
 

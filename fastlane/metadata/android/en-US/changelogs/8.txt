@@ -1,0 +1,8 @@
+- Network Monitoring Mode: Added a real-time traffic sniffer via the local VPN to intercept and view which apps are attempting to connect to the internet, allowing direct blocking from the log screen.
+- App Status Color-Coding: Visually differentiate apps in the list with specific colors: Red for System apps, Yellow for Disabled apps, and Grey with a strike-through for Uninstalled apps that still have orphan firewall rules.
+- Orphaned Rules Management: The app now scans for and displays previously uninstalled apps that still have leftover firewall rules in storage, allowing you to clean them up.
+- Enhanced Sorting & Filtering: Expanded list management with new options to show blocked apps last, show disabled apps only, or filter by uninstalled apps.
+- UI & Performance Enhancements: Integrated fast scrolling for quicker list navigation, locked user inputs during app loads to prevent race conditions, and added smooth rotation handling to prevent screen resets.
+- New confirmation dialog when copying rules from one another.
+- in Shizuku mode, when copying VPN settings, the rules get bundled in UI correctly. (Shizuku limitations)	
+- Many other bug fixes and performance improvements.  
